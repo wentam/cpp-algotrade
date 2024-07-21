@@ -3,7 +3,7 @@ CXX ?= g++
 # -- end config
 
 INCLUDE = -Iinclude/ -I.
-CXXFLAGS = -g -Og -Wall $(INCLUDE)
+CXXFLAGS = -std=c++20 -g -Og -Wall $(INCLUDE)
 
 rwildcard=$(wildcard $1$2) $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2))
 

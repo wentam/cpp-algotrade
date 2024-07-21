@@ -61,7 +61,9 @@ int main() {
   std::string statePath = yamlConfig["state-path"].as<std::string>();
 
   algotrade::AlpacaApiClient a(alpacaPaperApiKey, alpacaPaperApiSecret, true, stderr);
-  a.accountInfo();
+  algotrade::AlpacaAccountInfo info = a.accountInfo();
+
+  fprintf(stderr, "%s\n", info.buyingPower.str(100).c_str());
 
   return 0;
 }

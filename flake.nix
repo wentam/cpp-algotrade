@@ -13,6 +13,7 @@
       buildInputs = with pkgs; [
         libcpr
         libyamlcpp
+        nlohmann_json
         sqlite
         boost
       ];

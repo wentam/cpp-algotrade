@@ -2,6 +2,8 @@
 
 using namespace boost::multiprecision;
 
-typedef cpp_dec_float_100 currency;
+namespace algotrade {
+  typedef cpp_dec_float_100 currency;
+}
 
 
