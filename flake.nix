@@ -11,6 +11,7 @@
     devShells.default = pkgs.gcc14Stdenv.mkDerivation {
       name = "shell";
       buildInputs = with pkgs; [
+        libcpr
         libyamlcpp
         sqlite
         boost

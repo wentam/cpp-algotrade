@@ -37,10 +37,10 @@ build/testbot/:
 	mkdir -p build/testbot
 
 build/lib/$(SONAME): build/lib/ $(OBJS)
-	$(CXX) $(CXXFLAGS) -shared -o $@ $(OBJS)
+	$(CXX) $(CXXFLAGS) -lcpr -shared -o $@ $(OBJS)
 
 build/testbot/testbot: build/testbot/ $(TESTBOT_OBJS) build/lib/$(SONAME)
-	$(CXX) $(CXXFLAGS) -Lbuild/lib/ -lalgotrade -o $@ $(TESTBOT_OBJS)
+	$(CXX) $(CXXFLAGS) -Lbuild/lib/ -lyaml-cpp -lalgotrade -o $@ $(TESTBOT_OBJS)
 
 -include $(DEPS)
 -include $(TESTBOT_DEPS)

@@ -1,0 +1,8 @@
+# Auth
+alpaca-paper-api-key-cmd: "echo XXXXXXXXXXX"
+alpaca-paper-api-secret-cmd: "echo XXXXXXXXXXXXXXXXXXXXX"
+alpaca-real-api-key-cmd: "echo XXXXXXXXX"
+alpaca-real-api-secret-cmd: "echo XXXXXXXXXXXXXXXXXXXXX"
+
+# Path
+state-path: "/tmp/testbot-state/"
