@@ -47,6 +47,13 @@ namespace algotrade {
     // TODO pending_reg_taf_fees
   };
 
+  struct AlpacaClock {
+    // TODO timestamp
+    bool isOpen;
+    // TODO next_open
+    // TODO next_close
+  };
+
   class AlpacaAuthenticationFailure : public std::exception {
     std::string whatstr = "Alpaca authentication failed";
     const char* what() const throw() { return whatstr.c_str(); }
@@ -64,6 +71,7 @@ namespace algotrade {
       AlpacaApiClient(std::string key, std::string secret, bool paperMode, FILE* log);
 
       AlpacaAccountInfo accountInfo();
+      AlpacaClock clock();
 
     private:
       std::string key;

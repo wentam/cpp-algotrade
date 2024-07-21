@@ -23,6 +23,26 @@ static void throwCommonErrors(cpr::Response r) {
   if (r.status_code == 403) throw AlpacaAuthenticationFailure();
 }
 
+AlpacaClock AlpacaApiClient::clock() {
+  cpr::Response r = cpr::Get(cpr::Url{this->baseUrl+"/v2/clock"}, this->authHeaders);
+
+  throwCommonErrors(r);
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+
+  AlpacaClock clock = {
+    // TODO timestamp
+    .isOpen = data["is_open"],
+    // TODO next_open
+    // TODO next_close
+  };
+
+  if (this->log) fprintf(this->log, " --- Response (status %ld):\n %s\n", r.status_code, r.text.c_str());
+
+  return clock;
+}
+
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
   cpr::Response r = cpr::Get(cpr::Url{this->baseUrl+"/v2/account"}, this->authHeaders);
 
