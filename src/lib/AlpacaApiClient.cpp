@@ -1,11 +1,19 @@
 #include "lib/AlpacaApiClient.hpp"
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
+#include <chrono>
 
 using namespace algotrade;
 using json = nlohmann::json;
 
-AlpacaApiClient::AlpacaApiClient(std::string key, std::string secret, bool paperMode, FILE* log) : key(key), secret(secret), paperMode(paperMode), log(log) {
+static int64_t time_microseconds() {
+  auto now_since_epoch = std::chrono::high_resolution_clock::now().time_since_epoch();
+  return std::chrono::duration_cast<std::chrono::microseconds>(now_since_epoch).count();
+}
+
+AlpacaApiClient::AlpacaApiClient(std::string key, std::string secret, bool paperMode, int64_t rateLimit, FILE* log) : key(key), secret(secret), paperMode(paperMode), rpm(rateLimit), log(log) {
+
+  this->lastRequest = 0;
 
   if (paperMode) {
     this->baseUrl = "https://paper-api.alpaca.markets";
@@ -21,39 +29,72 @@ AlpacaApiClient::AlpacaApiClient(std::string key, std::string secret, bool paper
 
 static void throwCommonErrors(cpr::Response r) {
   if (r.status_code == 403) throw AlpacaAuthenticationFailure();
+  if (r.status_code == 429) throw AlpacaRateLimitExceeded();
+}
+
+void AlpacaApiClient::rateLimit() {
+  int64_t time = time_microseconds();
+
+  int64_t timeSinceLastRequest = time - this->lastRequest;
+  int64_t timePerRequest = (60000000/this->rpm);
+  int64_t timeUntilNextRequest = timePerRequest-timeSinceLastRequest;
+  fprintf(stderr, "%ld\n", timeSinceLastRequest);
+
+  if (timeUntilNextRequest > 0) usleep(timeUntilNextRequest);
+
+  this->lastRequest = time_microseconds(); // We're about to make a request, so update lastRequest
+}
+
+cpr::Response AlpacaApiClient::apiCall(bool dataApi,
+                              std::string endpoint,
+                              bool post,
+                              cpr::Header extraHeaders) {
+  std::string base = this->baseUrl;
+
+  if (dataApi) {
+    // TODO change base
+  }
+
+  this->rateLimit();
+
+  cpr::Response r;
+
+  if (post) {
+    // TODO
+  } else {
+     r = cpr::Get(cpr::Url{base+endpoint}, this->authHeaders);
+  }
+
+  // TODO handle cpr exceptions, throwing our own.
+
+  if (this->log) fprintf(this->log, " --- Response (status %ld):\n %s\n", r.status_code, r.text.c_str());
+
+  throwCommonErrors(r);
+
+  return r;
 }
 
 AlpacaClock AlpacaApiClient::clock() {
-  cpr::Response r = cpr::Get(cpr::Url{this->baseUrl+"/v2/clock"}, this->authHeaders);
-
-  throwCommonErrors(r);
+  auto r = this->apiCall(false, "/v2/clock", false, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
 
-  AlpacaClock clock = {
+  return {
     // TODO timestamp
     .isOpen = data["is_open"],
     // TODO next_open
     // TODO next_close
   };
-
-  if (this->log) fprintf(this->log, " --- Response (status %ld):\n %s\n", r.status_code, r.text.c_str());
-
-  return clock;
 }
 
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
-  cpr::Response r = cpr::Get(cpr::Url{this->baseUrl+"/v2/account"}, this->authHeaders);
-
-  // TODO handle cpr exceptions, throwing our own.
-
-  throwCommonErrors(r);
+  auto r = this->apiCall(false, "/v2/account", false, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
 
-  AlpacaAccountInfo info = {
+  return {
     .id = data["id"],
     // TODO: admin_configurations
     // TODO: user_configurations
@@ -94,7 +135,4 @@ AlpacaAccountInfo AlpacaApiClient::accountInfo() {
     // TODO intraday_adjustments
     // TODO pending_reg_taf_fees
   };
-
-  if (this->log) fprintf(this->log, " --- Response (status %ld):\n %s\n", r.status_code, r.text.c_str());
-  return info;
 }

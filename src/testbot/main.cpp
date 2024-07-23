@@ -60,12 +60,13 @@ int main() {
     secretcmd(yamlConfig["alpaca-real-api-secret-cmd"].as<std::string>());
   std::string statePath = yamlConfig["state-path"].as<std::string>();
 
-  algotrade::AlpacaApiClient alpaca(alpacaPaperApiKey, alpacaPaperApiSecret, true, stderr);
-  algotrade::AlpacaClock clock = alpaca.clock();
+  algotrade::AlpacaApiClient alpaca(alpacaPaperApiKey, alpacaPaperApiSecret, true, 200, stderr);
 
-  //algotrade::AlpacaAccountInfo info = alpaca.accountInfo();
+  //algotrade::AlpacaClock clock = alpaca.clock();
 
-  //fprintf(stderr, "%s\n", info.buyingPower.str(100).c_str());
+  algotrade::AlpacaAccountInfo info = alpaca.accountInfo();
+
+  fprintf(stderr, "%s\n", info.buyingPower.str(100).c_str());
 
   return 0;
 }

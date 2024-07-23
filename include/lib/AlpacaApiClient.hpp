@@ -59,6 +59,11 @@ namespace algotrade {
     const char* what() const throw() { return whatstr.c_str(); }
   };
 
+  class AlpacaRateLimitExceeded : public std::exception {
+    std::string whatstr = "Alpaca api rate limit exceeded";
+    const char* what() const throw() { return whatstr.c_str(); }
+  };
+
 
   class UnknownAlpacaError : public std::exception {
     std::string whatstr = "Unknown alpaca error";
@@ -67,16 +72,30 @@ namespace algotrade {
 
   class AlpacaApiClient {
     public:
-      // log can be NULL if you don't want logging
-      AlpacaApiClient(std::string key, std::string secret, bool paperMode, FILE* log);
+      AlpacaApiClient(std::string key,    // your alpaca key
+                      std::string secret, // your alpaca secret
+                      bool paperMode,     // true for paper trading, false for real trading
+                      int64_t rateLimit,  // requests-per-minute for client-side limiting, else -1
+                      FILE* log);         // log destination for api logging, NULL otherwise
+
+      // All api calls may throw:
+      // * AlpacaAuthenticationFailure
+      // * AlpacaRateLimitExceeded
+      // * UnknownAlpacaError
 
       AlpacaAccountInfo accountInfo();
-      AlpacaClock clock();
+      AlpacaClock       clock();
 
     private:
+      void rateLimit();
+      int64_t lastRequest;
+
+      cpr::Response apiCall(bool dataApi, std::string endpoint, bool post, cpr::Header extraHeaders);
+
       std::string key;
       std::string secret;
       bool paperMode;
+      int64_t rpm;
       FILE* log;
       std::string baseUrl;
       cpr::Header authHeaders;
