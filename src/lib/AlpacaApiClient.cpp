@@ -33,6 +33,8 @@ static void throwCommonErrors(cpr::Response r) {
 }
 
 void AlpacaApiClient::rateLimit() {
+  if (this->rpm == -1) return;
+
   int64_t time = time_microseconds();
 
   int64_t timeSinceLastRequest = time - this->lastRequest;
