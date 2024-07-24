@@ -1,3 +1,5 @@
+#pragma once
+
 #include "lib/types.hpp"
 #include <string>
 #include <stdexcept>
@@ -86,11 +88,21 @@ namespace algotrade {
       AlpacaAccountInfo accountInfo();
       AlpacaClock       clock();
 
+      std::vector<Bar>  bars(std::string symbol,
+                             std::chrono::time_point<std::chrono::system_clock> start,
+                             std::chrono::time_point<std::chrono::system_clock> end,
+                             int64_t limit,          // Max bars to return, max 10,000
+                             std::string timeframe); // 15Min, 2Hour, 3Day, 3Week, 2Month
+
     private:
       void rateLimit();
       int64_t lastRequest;
 
-      cpr::Response apiCall(bool dataApi, std::string endpoint, bool post, cpr::Header extraHeaders);
+      cpr::Response apiCall(bool dataApi,
+                            std::string endpoint,
+                            bool post,
+                            cpr::Header extraHeaders,
+                            cpr::Parameters extraParameters);
 
       std::string key;
       std::string secret;
@@ -98,6 +110,7 @@ namespace algotrade {
       int64_t rpm;
       FILE* log;
       std::string baseUrl;
+      std::string dataBaseUrl;
       cpr::Header authHeaders;
   };
 }

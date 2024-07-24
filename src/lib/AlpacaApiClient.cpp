@@ -1,4 +1,5 @@
 #include "lib/AlpacaApiClient.hpp"
+#include "lib/util.hpp"
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
 #include <chrono>
@@ -20,6 +21,8 @@ AlpacaApiClient::AlpacaApiClient(std::string key, std::string secret, bool paper
   } else {
     this->baseUrl = "https://api.alpaca.markets";
   }
+
+  this->dataBaseUrl = "https://data.alpaca.markets";
 
   this->authHeaders = cpr::Header{{"APCA-API-KEY-ID", this->key},
                                   {"APCA-API-SECRET-KEY", this->secret}};
@@ -50,21 +53,22 @@ void AlpacaApiClient::rateLimit() {
 cpr::Response AlpacaApiClient::apiCall(bool dataApi,
                               std::string endpoint,
                               bool post,
-                              cpr::Header extraHeaders) {
-  std::string base = this->baseUrl;
-
-  if (dataApi) {
-    // TODO change base
-  }
-
+                              cpr::Header extraHeaders,
+                              cpr::Parameters extraParameters) {
   this->rateLimit();
+
+  std::string  base = this->baseUrl;
+  if (dataApi) base = this->dataBaseUrl;
 
   cpr::Response r;
 
   if (post) {
     // TODO
   } else {
-     r = cpr::Get(cpr::Url{base+endpoint}, this->authHeaders);
+     r = cpr::Get(cpr::Url{base+endpoint},
+                  this->authHeaders,
+                  // TODO extraHeaders,
+                  extraParameters);
   }
 
   // TODO handle cpr exceptions, throwing our own.
@@ -77,7 +81,7 @@ cpr::Response AlpacaApiClient::apiCall(bool dataApi,
 }
 
 AlpacaClock AlpacaApiClient::clock() {
-  auto r = this->apiCall(false, "/v2/clock", false, {});
+  auto r = this->apiCall(false, "/v2/clock", false, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -91,7 +95,7 @@ AlpacaClock AlpacaApiClient::clock() {
 }
 
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
-  auto r = this->apiCall(false, "/v2/account", false, {});
+  auto r = this->apiCall(false, "/v2/account", false, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -137,4 +141,56 @@ AlpacaAccountInfo AlpacaApiClient::accountInfo() {
     // TODO intraday_adjustments
     // TODO pending_reg_taf_fees
   };
+}
+
+std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
+                            std::chrono::time_point<std::chrono::system_clock> start,
+                            std::chrono::time_point<std::chrono::system_clock> end,
+                            int64_t limit,
+                            std::string timeframe) {
+  std::vector<Bar> result;
+
+  std::string nextPageToken = "";
+  bool hasNextPage = true;
+  while (hasNextPage) {
+    // Assemble params
+    cpr::Parameters params = {
+      { "symbols", symbol },
+      { "start", timePointToRfc3339(start) },
+      { "end",   timePointToRfc3339(end) },
+      { "limit", std::to_string(limit) },
+      { "timeframe", timeframe }
+    };
+
+    if (nextPageToken != "") params.Add({ "page_token", nextPageToken });
+
+    // Make api call
+    auto r = this->apiCall(true, "/v2/stocks/bars", false, {}, params);
+    if (r.status_code != 200) throw UnknownAlpacaError();
+
+    // Add bars to output
+    json data = json::parse(r.text);
+    for (auto bar : data["bars"][symbol]) {
+      // TODO: number_float_t passes through double, reducing our precision.
+      //       This is incorrect for financial types. We're correcting this with cround()
+      //       for now, as double does obviously provide enough precision for hundredths (cents).
+      //
+      //       Might need to consider a better json library.
+
+      result.push_back({
+        // TODO time
+        .time   = rfc3339ToTimePoint(json::string_t(bar["t"])),
+        .open   = cround(currency(json::number_float_t(bar["o"])), 4),
+        .close  = cround(currency(json::number_float_t(bar["c"])), 4),
+        .high   = cround(currency(json::number_float_t(bar["h"])), 4),
+        .low    = cround(currency(json::number_float_t(bar["l"])), 4),
+        .volume = json::number_integer_t(bar["v"])
+      });
+    }
+
+    hasNextPage = !data["next_page_token"].is_null();
+    if (hasNextPage) nextPageToken = json::string_t(data["next_page_token"]);
+  }
+
+  return result;
 }
