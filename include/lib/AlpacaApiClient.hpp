@@ -56,6 +56,23 @@ namespace algotrade {
     // TODO next_close
   };
 
+  struct AlpacaAsset {
+    std::string id;
+    std::string symbol;
+    std::string assetClass;
+    std::string exchange;
+    std::string name;
+    std::string status;
+    bool tradable;
+    bool marginable;
+    bool shortable;
+    bool easyToBorrow;
+    bool fractionable;
+    std::string marginRequirementLong;
+    std::string marginRequirementShort;
+    // TODO attributes
+  };
+
   struct AlpacaCalendarEntry {
     std::chrono::time_point<std::chrono::system_clock> open;
     std::chrono::time_point<std::chrono::system_clock> close;
@@ -77,6 +94,11 @@ namespace algotrade {
     const char* what() const throw() { return whatstr.c_str(); }
   };
 
+  class AssetNotFoundAlpacaError : public std::exception {
+    std::string whatstr = "Asset not found";
+    const char* what() const throw() { return whatstr.c_str(); }
+  };
+
   class AlpacaApiClient {
     public:
       AlpacaApiClient(std::string key,    // your alpaca key
@@ -92,6 +114,8 @@ namespace algotrade {
 
       AlpacaAccountInfo accountInfo();
       AlpacaClock       clock();
+
+      AlpacaAsset asset(std::string symbol);
 
       std::vector<Bar>  bars(std::string symbol,
                              std::chrono::time_point<std::chrono::system_clock> start,

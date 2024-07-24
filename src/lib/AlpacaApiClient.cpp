@@ -94,6 +94,29 @@ AlpacaClock AlpacaApiClient::clock() {
   };
 }
 
+AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
+  auto r = this->apiCall(false, "/v2/assets/"+symbol, false, {}, {});
+  if (r.status_code == 404) throw AssetNotFoundAlpacaError();
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+  return (AlpacaAsset){
+    .id                     = json::string_t(data["id"]),
+    .symbol                 = json::string_t(data["symbol"]),
+    .assetClass             = json::string_t(data["class"]),
+    .exchange               = json::string_t(data["exchange"]),
+    .name                   = json::string_t(data["name"]),
+    .status                 = json::string_t(data["status"]),
+    .tradable               = json::boolean_t(data["tradable"]),
+    .marginable             = json::boolean_t(data["marginable"]),
+    .shortable              = json::boolean_t(data["shortable"]),
+    .easyToBorrow           = json::boolean_t(data["easy_to_borrow"]),
+    .fractionable           = json::boolean_t(data["fractionable"]),
+    .marginRequirementLong  = json::string_t(data["margin_requirement_long"]),
+    .marginRequirementShort = json::string_t(data["margin_requirement_short"])
+  };
+}
+
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
   auto r = this->apiCall(false, "/v2/account", false, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();

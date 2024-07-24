@@ -81,14 +81,17 @@ int main() {
 
   //fprintf(stderr, "%ld\n", sizeof(std::chrono::time_point<std::chrono::system_clock>));
 
-  auto result = alpaca.calendar(std::chrono::system_clock::now()-48h,
-                                std::chrono::system_clock::now());
+  //auto result = alpaca.calendar(std::chrono::system_clock::now()-48h,
+  //                              std::chrono::system_clock::now());
 
-  for (auto entry : result) {
-    fprintf(stderr, "%ld %ld\n",
-        std::chrono::duration_cast<std::chrono::seconds>(entry.open.time_since_epoch()).count(),
-        std::chrono::duration_cast<std::chrono::seconds>(entry.close.time_since_epoch()).count());
-  }
+  //for (auto entry : result) {
+  //  fprintf(stderr, "%ld %ld\n",
+  //      std::chrono::duration_cast<std::chrono::seconds>(entry.open.time_since_epoch()).count(),
+  //      std::chrono::duration_cast<std::chrono::seconds>(entry.close.time_since_epoch()).count());
+  //}
+
+  auto asset = alpaca.asset("SPY");
+  fprintf(stderr, "%s\n", asset.status.c_str());
 
   return 0;
 }
