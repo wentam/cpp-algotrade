@@ -94,12 +94,7 @@ AlpacaClock AlpacaApiClient::clock() {
   };
 }
 
-AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
-  auto r = this->apiCall(false, "/v2/assets/"+symbol, false, {}, {});
-  if (r.status_code == 404) throw AssetNotFoundAlpacaError();
-  if (r.status_code != 200) throw UnknownAlpacaError();
-
-  json data = json::parse(r.text);
+static AlpacaAsset assetFromJson(json data) {
   return (AlpacaAsset){
     .id                     = json::string_t(data["id"]),
     .symbol                 = json::string_t(data["symbol"]),
@@ -115,6 +110,26 @@ AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
     .marginRequirementLong  = json::string_t(data["margin_requirement_long"]),
     .marginRequirementShort = json::string_t(data["margin_requirement_short"])
   };
+}
+
+AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
+  auto r = this->apiCall(false, "/v2/assets/"+symbol, false, {}, {});
+  if (r.status_code == 404) throw AssetNotFoundAlpacaError();
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+  return assetFromJson(data);
+}
+
+std::vector<AlpacaAsset> AlpacaApiClient::assets() {
+  auto r = this->apiCall(false, "/v2/assets", false, {}, {});
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+
+  std::vector<AlpacaAsset> result;
+  for (auto asset : data) result.push_back(assetFromJson(asset));
+  return result;
 }
 
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {

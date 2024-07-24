@@ -90,8 +90,11 @@ int main() {
   //      std::chrono::duration_cast<std::chrono::seconds>(entry.close.time_since_epoch()).count());
   //}
 
-  auto asset = alpaca.asset("SPY");
-  fprintf(stderr, "%s\n", asset.status.c_str());
+  //auto asset = alpaca.asset("SPY");
+  //fprintf(stderr, "%s\n", asset.status.c_str());
+
+  auto assets = alpaca.assets();
+  for (auto asset : assets) fprintf(stderr, "%s\n", asset.symbol.c_str());
 
   return 0;
 }

@@ -116,6 +116,7 @@ namespace algotrade {
       AlpacaClock       clock();
 
       AlpacaAsset asset(std::string symbol);
+      std::vector<AlpacaAsset> assets();
 
       std::vector<Bar>  bars(std::string symbol,
                              std::chrono::time_point<std::chrono::system_clock> start,
