@@ -36,6 +36,21 @@ namespace algotrade {
   }
 
   [[maybe_unused]]
+  static std::chrono::time_point<std::chrono::system_clock>
+  toTimePoint(std::string ymdhm, std::string format, std::string fromTimeZone) {
+    using namespace std::chrono;
+
+    const std::chrono::time_zone* tz = std::chrono::locate_zone(fromTimeZone);
+
+    std::istringstream in{ymdhm};
+
+    std::chrono::time_point<std::chrono::local_t, std::chrono::seconds> t ;
+    in >> parse(format, t);
+
+    return tz->to_sys(t);
+  }
+
+  [[maybe_unused]]
   static double dround( double f, int places ) {
       double n = std::pow(10.0, places);
       return std::round(f*n)/n;

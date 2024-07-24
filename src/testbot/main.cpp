@@ -69,18 +69,26 @@ int main() {
 
   //fprintf(stderr, "%s\n", info.buyingPower.str(100).c_str());
 
-  auto bars = alpaca.bars("SPY",
-                          std::chrono::system_clock::now()-10h,
-                          std::chrono::system_clock::now(),
-                          9000,
-                          "1Min");
+  //auto bars = alpaca.bars("SPY",
+  //                        std::chrono::system_clock::now()-10h,
+  //                        std::chrono::system_clock::now(),
+  //                        9000,
+  //                        "1Min");
 
-  for (auto bar : bars) {
-    fprintf(stderr, "%ld\n", std::chrono::duration_cast<std::chrono::seconds>(bar.time.time_since_epoch()).count());
-  }
+  //for (auto bar : bars) {
+  //  fprintf(stderr, "%ld\n", std::chrono::duration_cast<std::chrono::seconds>(bar.time.time_since_epoch()).count());
+  //}
 
   //fprintf(stderr, "%ld\n", sizeof(std::chrono::time_point<std::chrono::system_clock>));
 
+  auto result = alpaca.calendar(std::chrono::system_clock::now()-48h,
+                                std::chrono::system_clock::now());
+
+  for (auto entry : result) {
+    fprintf(stderr, "%ld %ld\n",
+        std::chrono::duration_cast<std::chrono::seconds>(entry.open.time_since_epoch()).count(),
+        std::chrono::duration_cast<std::chrono::seconds>(entry.close.time_since_epoch()).count());
+  }
 
   return 0;
 }

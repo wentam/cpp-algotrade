@@ -194,3 +194,29 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
 
   return result;
 }
+
+std::vector<AlpacaCalendarEntry> AlpacaApiClient::calendar(
+    std::chrono::time_point<std::chrono::system_clock> start,
+    std::chrono::time_point<std::chrono::system_clock> end) {
+  auto r = this->apiCall(false, "/v2/calendar", false, {},
+      {{ "start", timePointToRfc3339(start) },
+       { "end",   timePointToRfc3339(end)   }});
+
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+
+  std::vector<AlpacaCalendarEntry> result;
+
+  for (auto entry : data) {
+    std::string openStr = json::string_t(entry["date"]) + " " + json::string_t(entry["open"]);
+    std::string closeStr = json::string_t(entry["date"]) + " " + json::string_t(entry["close"]);
+
+    result.push_back({
+      .open  = toTimePoint(openStr,  "%F %H:%M", "America/New_York"),
+      .close = toTimePoint(closeStr, "%F %H:%M", "America/New_York"),
+    });
+  }
+
+  return result;
+}

@@ -56,6 +56,11 @@ namespace algotrade {
     // TODO next_close
   };
 
+  struct AlpacaCalendarEntry {
+    std::chrono::time_point<std::chrono::system_clock> open;
+    std::chrono::time_point<std::chrono::system_clock> close;
+  };
+
   class AlpacaAuthenticationFailure : public std::exception {
     std::string whatstr = "Alpaca authentication failed";
     const char* what() const throw() { return whatstr.c_str(); }
@@ -93,6 +98,11 @@ namespace algotrade {
                              std::chrono::time_point<std::chrono::system_clock> end,
                              int64_t limit,          // Max bars to return, max 10,000
                              std::string timeframe); // 15Min, 2Hour, 3Day, 3Week, 2Month
+
+      std::vector<AlpacaCalendarEntry> calendar(
+          std::chrono::time_point<std::chrono::system_clock> start,
+          std::chrono::time_point<std::chrono::system_clock> end
+      );
 
     private:
       void rateLimit();
