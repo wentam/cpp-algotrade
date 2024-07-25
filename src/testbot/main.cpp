@@ -93,8 +93,11 @@ int main() {
   //auto asset = alpaca.asset("SPY");
   //fprintf(stderr, "%s\n", asset.status.c_str());
 
-  auto assets = alpaca.assets();
-  for (auto asset : assets) fprintf(stderr, "%s\n", asset.symbol.c_str());
+  auto positions = alpaca.positions();
+  for (auto position : positions) fprintf(stderr, "%s\n", position.symbol.c_str());
+
+  //auto assets = alpaca.assets();
+  //for (auto asset : assets) fprintf(stderr, "%s\n", asset.symbol.c_str());
 
   return 0;
 }

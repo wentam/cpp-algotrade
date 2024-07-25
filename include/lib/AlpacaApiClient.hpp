@@ -73,6 +73,26 @@ namespace algotrade {
     // TODO attributes
   };
 
+  struct AlpacaPosition {
+    std::string assetId;
+    std::string symbol;
+    std::string exchange;
+    std::string assetClass;
+    currency avgEntryPrice;
+    int64_t  qty;
+    std::string side; // TODO enum?
+    currency marketValue;
+    currency costBasis;
+    currency unrealizedPl;
+    cpp_dec_float_100 unrealizedPlpc;
+    currency unrealizedIntradayPl;
+    cpp_dec_float_100 unrealizedIntradayPlpc;
+    currency currentPrice;
+    currency lastDayPrice;
+    cpp_dec_float_100 changeToday;
+    bool assetMarginable;
+  };
+
   struct AlpacaCalendarEntry {
     std::chrono::time_point<std::chrono::system_clock> open;
     std::chrono::time_point<std::chrono::system_clock> close;
@@ -118,6 +138,8 @@ namespace algotrade {
       AlpacaAsset asset(std::string symbol);
       std::vector<AlpacaAsset> assets();
 
+      std::vector<AlpacaPosition> positions();
+
       std::vector<Bar>  bars(std::string symbol,
                              std::chrono::time_point<std::chrono::system_clock> start,
                              std::chrono::time_point<std::chrono::system_clock> end,
@@ -128,6 +150,11 @@ namespace algotrade {
           std::chrono::time_point<std::chrono::system_clock> start,
           std::chrono::time_point<std::chrono::system_clock> end
       );
+
+      // TODO: placeOrder
+      // TODO: getOrder
+      // TODO: getOrderByClientId
+      // TODO: positions
 
     private:
       void rateLimit();

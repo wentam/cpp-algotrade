@@ -132,6 +132,39 @@ std::vector<AlpacaAsset> AlpacaApiClient::assets() {
   return result;
 }
 
+std::vector<AlpacaPosition> AlpacaApiClient::positions() {
+  auto r = this->apiCall(false, "/v2/positions", false, {}, {});
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  json data = json::parse(r.text);
+
+  std::vector<AlpacaPosition> result;
+
+  for (auto position : data) {
+    result.push_back({
+        .assetId                =                   json::string_t(position["asset_id"]),
+        .symbol                 =                   json::string_t(position["symbol"]),
+        .exchange               =                   json::string_t(position["exchange"]),
+        .assetClass             =                   json::string_t(position["asset_class"]),
+        .avgEntryPrice          =          currency(json::string_t(position["avg_entry_price"])),
+        .qty                    =        std::stoll(json::string_t(position["qty"])),
+        .side                   =                   json::string_t(position["side"]),
+        .marketValue            =          currency(json::string_t(position["market_value"])),
+        .costBasis              =          currency(json::string_t(position["cost_basis"])),
+        .unrealizedPl           =          currency(json::string_t(position["unrealized_pl"])),
+        .unrealizedPlpc         = cpp_dec_float_100(json::string_t(position["unrealized_plpc"])),
+        .unrealizedIntradayPl   =          currency(json::string_t(position["unrealized_intraday_pl"])),
+        .unrealizedIntradayPlpc = cpp_dec_float_100(json::string_t(position["unrealized_intraday_plpc"])),
+        .currentPrice           =          currency(json::string_t(position["current_price"])),
+        .lastDayPrice           =          currency(json::string_t(position["lastday_price"])),
+        .changeToday            = cpp_dec_float_100(json::string_t(position["change_today"])),
+        .assetMarginable        =                  json::boolean_t(position["asset_marginable"]),
+    });
+  }
+
+  return result;
+}
+
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
   auto r = this->apiCall(false, "/v2/account", false, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
