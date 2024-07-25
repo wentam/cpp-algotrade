@@ -53,6 +53,7 @@ void AlpacaApiClient::rateLimit() {
 cpr::Response AlpacaApiClient::apiCall(bool dataApi,
                               std::string endpoint,
                               bool post,
+                              json postData,
                               cpr::Header extraHeaders,
                               cpr::Parameters extraParameters) {
   this->rateLimit();
@@ -63,7 +64,11 @@ cpr::Response AlpacaApiClient::apiCall(bool dataApi,
   cpr::Response r;
 
   if (post) {
-    // TODO
+    r = cpr::Post(cpr::Url{base+endpoint},
+                  this->authHeaders,
+                  // TODO extraHeaders,
+                  extraParameters,
+                  cpr::Body{postData.dump()});
   } else {
      r = cpr::Get(cpr::Url{base+endpoint},
                   this->authHeaders,
@@ -81,7 +86,7 @@ cpr::Response AlpacaApiClient::apiCall(bool dataApi,
 }
 
 AlpacaClock AlpacaApiClient::clock() {
-  auto r = this->apiCall(false, "/v2/clock", false, {}, {});
+  auto r = this->apiCall(false, "/v2/clock", false, {}, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -113,7 +118,7 @@ static AlpacaAsset assetFromJson(json data) {
 }
 
 AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
-  auto r = this->apiCall(false, "/v2/assets/"+symbol, false, {}, {});
+  auto r = this->apiCall(false, "/v2/assets/"+symbol, false, {}, {}, {});
   if (r.status_code == 404) throw AssetNotFoundAlpacaError();
   if (r.status_code != 200) throw UnknownAlpacaError();
 
@@ -122,7 +127,7 @@ AlpacaAsset AlpacaApiClient::asset(std::string symbol) {
 }
 
 std::vector<AlpacaAsset> AlpacaApiClient::assets() {
-  auto r = this->apiCall(false, "/v2/assets", false, {}, {});
+  auto r = this->apiCall(false, "/v2/assets", false, {}, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -133,7 +138,7 @@ std::vector<AlpacaAsset> AlpacaApiClient::assets() {
 }
 
 std::vector<AlpacaPosition> AlpacaApiClient::positions() {
-  auto r = this->apiCall(false, "/v2/positions", false, {}, {});
+  auto r = this->apiCall(false, "/v2/positions", false, {}, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -166,7 +171,7 @@ std::vector<AlpacaPosition> AlpacaApiClient::positions() {
 }
 
 AlpacaAccountInfo AlpacaApiClient::accountInfo() {
-  auto r = this->apiCall(false, "/v2/account", false, {}, {});
+  auto r = this->apiCall(false, "/v2/account", false, {}, {}, {});
   if (r.status_code != 200) throw UnknownAlpacaError();
 
   json data = json::parse(r.text);
@@ -236,7 +241,7 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
     if (nextPageToken != "") params.Add({ "page_token", nextPageToken });
 
     // Make api call
-    auto r = this->apiCall(true, "/v2/stocks/bars", false, {}, params);
+    auto r = this->apiCall(true, "/v2/stocks/bars", false, {}, {}, params);
     if (r.status_code != 200) throw UnknownAlpacaError();
 
     // Add bars to output
@@ -269,7 +274,7 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
 std::vector<AlpacaCalendarEntry> AlpacaApiClient::calendar(
     std::chrono::time_point<std::chrono::system_clock> start,
     std::chrono::time_point<std::chrono::system_clock> end) {
-  auto r = this->apiCall(false, "/v2/calendar", false, {},
+  auto r = this->apiCall(false, "/v2/calendar", false, {}, {},
       {{ "start", timePointToRfc3339(start) },
        { "end",   timePointToRfc3339(end)   }});
 
@@ -290,4 +295,28 @@ std::vector<AlpacaCalendarEntry> AlpacaApiClient::calendar(
   }
 
   return result;
+}
+
+void AlpacaApiClient::placeOrder(std::string symbol,
+                                 int64_t qty, // Positive for long, negative for short
+                                 std::string timeInForce,
+                                 currency limitPrice, // If less than 0, market order. Else limit order.
+                                 bool extendedHours) {
+
+  json postData;
+
+  postData["symbol"] = symbol;
+
+  if (qty > 0) postData["side"] = "buy"; else postData["side"] = "sell";
+  if (limitPrice <= 0) postData["type"] = "market"; else postData["type"] = "limit";
+
+  postData["time_in_force"] = timeInForce;
+  postData["extended_hours"] = extendedHours;
+  postData["qty"] = std::to_string(abs(qty));
+
+  auto r = this->apiCall(false, "/v2/orders", true, postData, {}, {});
+  if (r.status_code != 200) throw UnknownAlpacaError();
+
+  // TODO return a client order ID?
+  return;
 }

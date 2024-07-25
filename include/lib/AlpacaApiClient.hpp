@@ -4,6 +4,9 @@
 #include <string>
 #include <stdexcept>
 #include <cpr/cpr.h>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace algotrade {
   struct AlpacaAccountInfo {
@@ -151,10 +154,15 @@ namespace algotrade {
           std::chrono::time_point<std::chrono::system_clock> end
       );
 
-      // TODO: placeOrder
+      void placeOrder(
+          std::string symbol,
+          int64_t qty, // Positive for long, negative for short
+          std::string timeInForce,
+          currency limitPrice, // If <= 0, market order. Else limit order.
+          bool extendedHours);
+
       // TODO: getOrder
       // TODO: getOrderByClientId
-      // TODO: positions
 
     private:
       void rateLimit();
@@ -163,6 +171,7 @@ namespace algotrade {
       cpr::Response apiCall(bool dataApi,
                             std::string endpoint,
                             bool post,
+                            json postData,
                             cpr::Header extraHeaders,
                             cpr::Parameters extraParameters);
 
