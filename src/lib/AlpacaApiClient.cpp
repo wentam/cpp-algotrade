@@ -220,8 +220,8 @@ AlpacaAccountInfo AlpacaApiClient::accountInfo() {
 }
 
 std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
-                            std::chrono::time_point<std::chrono::system_clock> start,
-                            std::chrono::time_point<std::chrono::system_clock> end,
+                            unix_time_seconds start,
+                            unix_time_seconds end,
                             int64_t limit,
                             std::string timeframe) {
   std::vector<Bar> result;
@@ -232,8 +232,8 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
     // Assemble params
     cpr::Parameters params = {
       { "symbols", symbol },
-      { "start", timePointToRfc3339(start) },
-      { "end",   timePointToRfc3339(end) },
+      { "start", unixTimeToRfc3339(start) },
+      { "end",   unixTimeToRfc3339(end) },
       { "limit", std::to_string(limit) },
       { "timeframe", timeframe }
     };
@@ -255,7 +255,7 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
 
       result.push_back({
         // TODO time
-        .time   = rfc3339ToTimePoint(json::string_t(bar["t"])),
+        .time   = rfc3339ToUnixTime(json::string_t(bar["t"])),
         .open   = cround(currency(json::number_float_t(bar["o"])), 4),
         .close  = cround(currency(json::number_float_t(bar["c"])), 4),
         .high   = cround(currency(json::number_float_t(bar["h"])), 4),
@@ -272,11 +272,11 @@ std::vector<Bar> AlpacaApiClient::bars(std::string symbol,
 }
 
 std::vector<AlpacaCalendarEntry> AlpacaApiClient::calendar(
-    std::chrono::time_point<std::chrono::system_clock> start,
-    std::chrono::time_point<std::chrono::system_clock> end) {
+    unix_time_seconds start,
+    unix_time_seconds end) {
   auto r = this->apiCall(false, "/v2/calendar", false, {}, {},
-      {{ "start", timePointToRfc3339(start) },
-       { "end",   timePointToRfc3339(end)   }});
+      {{ "start", unixTimeToRfc3339(start) },
+       { "end",   unixTimeToRfc3339(end)   }});
 
   if (r.status_code != 200) throw UnknownAlpacaError();
 
@@ -289,8 +289,8 @@ std::vector<AlpacaCalendarEntry> AlpacaApiClient::calendar(
     std::string closeStr = json::string_t(entry["date"]) + " " + json::string_t(entry["close"]);
 
     result.push_back({
-      .open  = toTimePoint(openStr,  "%F %H:%M", "America/New_York"),
-      .close = toTimePoint(closeStr, "%F %H:%M", "America/New_York"),
+      .open  = toUnixTime(openStr,  "%F %H:%M", "America/New_York"),
+      .close = toUnixTime(closeStr, "%F %H:%M", "America/New_York"),
     });
   }
 

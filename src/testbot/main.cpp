@@ -1,8 +1,9 @@
 #include "lib/AlpacaApiClient.hpp"
 #include "lib/util.hpp"
+#include "lib/algotrade.hpp"
 #include <yaml-cpp/yaml.h>
 
-std::string secretcmd(std::string cmd) {
+static std::string secretcmd(std::string cmd) {
   FILE* pipe = popen(cmd.c_str(), "r");
   char buffer[128];
   std::string result;
@@ -23,32 +24,24 @@ std::string secretcmd(std::string cmd) {
   return cleanStr;
 }
 
+static void requiredArg(YAML::Node& config, std::string arg) {
+  if (!config[arg]) {
+    printf("Error: %s config option not found. \n", arg.c_str());
+    exit(1);
+  }
+}
+
 int main() {
   // Read config file
   // TODO command line argument to specify config file?
   auto yamlConfig = YAML::LoadFile("config.yaml");
 
   // Validate config
-  if (!yamlConfig["alpaca-paper-api-key-cmd"]) {
-    printf("Error: alpaca-paper-api-key-cmd config option not found. \n");
-    return 1;
-  }
-  if (!yamlConfig["alpaca-paper-api-secret-cmd"]) {
-    printf("alpaca-paper-api-secret-cmd config option not found\n");
-    return 1;
-  }
-  if (!yamlConfig["alpaca-real-api-key-cmd"]) {
-    printf("alpaca-real-api-key-cmd config option not found\n");
-    return 1;
-  }
-  if (!yamlConfig["alpaca-real-api-secret-cmd"]) {
-    printf("alpaca-real-api-secret-cmd option not found \n");
-    return 1;
-  }
-  if (!yamlConfig["state-path"]) {
-    printf("state-path option not found \n");
-    return 1;
-  }
+  requiredArg(yamlConfig, "alpaca-paper-api-key-cmd");
+  requiredArg(yamlConfig, "alpaca-paper-api-secret-cmd");
+  requiredArg(yamlConfig, "alpaca-real-api-key-cmd");
+  requiredArg(yamlConfig, "alpaca-real-api-secret-cmd");
+  requiredArg(yamlConfig, "state-path");
 
   // Pull config values
   std::string alpacaPaperApiKey =
@@ -60,6 +53,10 @@ int main() {
   std::string alpacaRealApiSecret =
     secretcmd(yamlConfig["alpaca-real-api-secret-cmd"].as<std::string>());
   std::string statePath = yamlConfig["state-path"].as<std::string>();
+
+  algotrade::Engine tradeEngine(60, algotrade::Brokerage::ALPACA);
+
+  tradeEngine.run();
 
   algotrade::AlpacaApiClient alpaca(alpacaPaperApiKey, alpacaPaperApiSecret, true, 200, stderr);
 

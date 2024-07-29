@@ -97,8 +97,8 @@ namespace algotrade {
   };
 
   struct AlpacaCalendarEntry {
-    std::chrono::time_point<std::chrono::system_clock> open;
-    std::chrono::time_point<std::chrono::system_clock> close;
+    unix_time_seconds open;
+    unix_time_seconds close;
   };
 
   class AlpacaAuthenticationFailure : public std::exception {
@@ -144,15 +144,12 @@ namespace algotrade {
       std::vector<AlpacaPosition> positions();
 
       std::vector<Bar>  bars(std::string symbol,
-                             std::chrono::time_point<std::chrono::system_clock> start,
-                             std::chrono::time_point<std::chrono::system_clock> end,
+                             unix_time_seconds start,
+                             unix_time_seconds end,
                              int64_t limit,          // Max bars to return, max 10,000
                              std::string timeframe); // 15Min, 2Hour, 3Day, 3Week, 2Month
 
-      std::vector<AlpacaCalendarEntry> calendar(
-          std::chrono::time_point<std::chrono::system_clock> start,
-          std::chrono::time_point<std::chrono::system_clock> end
-      );
+      std::vector<AlpacaCalendarEntry> calendar(unix_time_seconds start, unix_time_seconds end);
 
       void placeOrder(
           std::string symbol,
