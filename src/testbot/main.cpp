@@ -31,6 +31,12 @@ static void requiredArg(YAML::Node& config, std::string arg) {
   }
 }
 
+class SimpleTradeAlgo : public algotrade::TradeAlgo {
+  void tick(algotrade::unix_time_seconds tickTime) {
+    fprintf(stderr, "tick in algo at %ld\n", tickTime);
+  }
+};
+
 int main() {
   // Read config file
   // TODO command line argument to specify config file?
@@ -54,9 +60,10 @@ int main() {
     secretcmd(yamlConfig["alpaca-real-api-secret-cmd"].as<std::string>());
   std::string statePath = yamlConfig["state-path"].as<std::string>();
 
-  algotrade::Engine tradeEngine(60, algotrade::Brokerage::ALPACA);
+  SimpleTradeAlgo myAlgo;
 
-  tradeEngine.run();
+  //algotrade::run_algo(60, algotrade::Brokerage::ALPACA, myAlgo);
+  algotrade::simulate_algo(60, myAlgo, 0, 500);
 
   algotrade::AlpacaApiClient alpaca(alpacaPaperApiKey, alpacaPaperApiSecret, true, 200, stderr);
 
@@ -67,13 +74,13 @@ int main() {
   //fprintf(stderr, "%s\n", info.buyingPower.str(100).c_str());
 
   //auto bars = alpaca.bars("SPY",
-  //                        std::chrono::system_clock::now()-10h,
-  //                        std::chrono::system_clock::now(),
+  //                        time(NULL)-(100*3600),
+  //                        time(NULL),
   //                        9000,
   //                        "1Min");
 
   //for (auto bar : bars) {
-  //  fprintf(stderr, "%ld\n", std::chrono::duration_cast<std::chrono::seconds>(bar.time.time_since_epoch()).count());
+  //  fprintf(stderr, "%ld\n", bar.time);
   //}
 
   //fprintf(stderr, "%ld\n", sizeof(std::chrono::time_point<std::chrono::system_clock>));
